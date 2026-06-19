@@ -164,9 +164,12 @@ export const layer = Layer.effect(
 
     const fetch = Effect.fn("Git.fetch")((directory: string) => execute(directory, proc)(["fetch", "--all", "--prune"]))
 
-    const fetchBranch = Effect.fn("Git.fetchBranch")((directory: string, branch: string) =>
-      execute(directory, proc)(["fetch", "origin", `+refs/heads/${branch}:refs/remotes/origin/${branch}`]),
-    )
+    const fetchBranch = Effect.fn("Git.fetchBranch")((directory: string, branch: string) => {
+      // Support full refs (e.g., refs/tags/v1.0.0) and tags by detecting
+      // whether the input already contains a ref path prefix.
+      const ref = branch.startsWith("refs/") ? branch : `refs/heads/${branch}`
+      return execute(directory, proc)(["fetch", "origin", `+${ref}:refs/remotes/origin/${branch}`])
+    })
 
     const checkout = Effect.fn("Git.checkout")((directory: string, branch: string) =>
       execute(directory, proc)(["checkout", "-B", branch, `origin/${branch}`]),
